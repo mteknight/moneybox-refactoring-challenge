@@ -21,12 +21,7 @@ namespace Moneybox.App.Features
             var from = this.accountRepository.GetAccountById(fromAccountId);
             var to = this.accountRepository.GetAccountById(toAccountId);
 
-            var fromBalance = from.CanTransfer(amount);
-
-            if (fromBalance < 500m)
-            {
-                this.notificationService.NotifyFundsLow(from.User.Email);
-            }
+            from.CanTransfer(amount, this.notificationService);
 
             var paidIn = to.PaidIn + amount;
             if (paidIn > Account.PayInLimit)

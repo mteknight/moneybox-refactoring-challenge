@@ -1,5 +1,7 @@
 ﻿using System;
 
+using Moneybox.App.Domain.Services;
+
 namespace Moneybox.App
 {
     public class Account
@@ -16,7 +18,9 @@ namespace Moneybox.App
 
         public decimal PaidIn { get; set; }
 
-        public decimal CanTransfer(decimal amount)
+        public bool CanTransfer(
+            decimal amount,
+            INotificationService notificationService)
         {
             var fromBalance = this.Balance - amount;
             if (fromBalance < 0m)
@@ -24,7 +28,12 @@ namespace Moneybox.App
                 throw new InvalidOperationException("Insufficient funds to make transfer");
             }
 
-            return fromBalance;
+            if (fromBalance < 500m)
+            {
+                notificationService.NotifyFundsLow(this.User.Email);
+            }
+
+            return true;
         }
     }
 }
