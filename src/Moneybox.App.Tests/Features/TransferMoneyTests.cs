@@ -1,11 +1,13 @@
 using System;
+using System.ComponentModel.DataAnnotations;
+
+using AutoFixture.Xunit2;
 
 using FluentAssertions;
 
 using Moneybox.App.DataAccess;
 using Moneybox.App.Domain.Services;
 using Moneybox.App.Features;
-using Moneybox.App.Tests.Features.TestData;
 
 using Moq;
 
@@ -16,32 +18,66 @@ namespace Moneybox.App.Tests.Features
     public sealed class TransferMoneyTests
     {
         [Theory]
-        [MemberData(nameof(TransferMoneyTestData.NoBalanceAccountCase), MemberType= typeof(TransferMoneyTestData))]
+        [AutoData]
         public void GivenFromAccountHasNoBalance_WhenExecutingMoneyTransfer_ExpectInvalidOperationException(
-            decimal fromAccountBalance,
-            Guid fromAccountId,
-            Guid toAccountId,
-            decimal amount)
+            [Range(int.MinValue, -1)] decimal fromAccountBalance,
+            Account fromAccount,
+            Account toAccount)
         {
             // Arrange
-            var fromAccount = new Account { Balance = fromAccountBalance };
+            fromAccount.Balance = fromAccountBalance;
+            const decimal amount = 0;
+            var mockedAccountRepository = CreateAccountRepositoryMock(fromAccount);
+            var mockedNotificationService = CreateNotificationServiceMock();
+            var sut = new TransferMoney(mockedAccountRepository.Object, mockedNotificationService.Object);
 
+            // Act
+            void SutCall() => sut.Execute(fromAccount.Id, toAccount.Id, amount);
+            Action sutCall = SutCall;
+
+            // Assert
+            sutCall.Should().ThrowExactly<InvalidOperationException>("Account has not balance to transfer from.");
+        }
+
+        [Theory]
+        [AutoData]
+        public void GivenFromAccountHasLowFunds_WhenExecutingMoneyTransfer_ExpectLowFundsNotification(
+            [Range(0, 500)] decimal fromAccountBalance,
+            Account fromAccount,
+            Account toAccount)
+        {
+            // Arrange
+            fromAccount.Balance = fromAccountBalance;
+            const decimal amount = 0;
+            var mockedAccountRepository = CreateAccountRepositoryMock(fromAccount);
+            var mockedNotificationService = CreateNotificationServiceMock();
+            var sut = new TransferMoney(mockedAccountRepository.Object, mockedNotificationService.Object);
+
+            // Act
+            sut.Execute(fromAccount.Id, toAccount.Id, amount);
+
+            // Assert
+            mockedNotificationService.Verify(service => service.NotifyFundsLow(It.IsAny<string>()), Times.Exactly(1));
+        }
+
+        private static Mock<IAccountRepository> CreateAccountRepositoryMock(Account fromAccount)
+        {
             var mockedAccountRepository = new Mock<IAccountRepository>();
             mockedAccountRepository
                 .Setup(repository => repository.GetAccountById(It.IsAny<Guid>()))
                 .Returns(fromAccount);
 
+            return mockedAccountRepository;
+        }
+
+        private static Mock<INotificationService> CreateNotificationServiceMock()
+        {
             var mockedNotificationService = new Mock<INotificationService>();
+            mockedNotificationService
+                .Setup(service => service.NotifyFundsLow(It.IsAny<string>()))
+                .Verifiable("A low funds notification is expected.");
 
-            var sut = new TransferMoney(mockedAccountRepository.Object, mockedNotificationService.Object);
-
-            // Act
-            void SutCall() => sut.Execute(fromAccountId, toAccountId, amount);
-            Action sutCall = SutCall;
-
-            // Assert
-            sutCall.Should().ThrowExactly<InvalidOperationException>("Account has not balance to transfer from.");
-
+            return mockedNotificationService;
         }
     }
 }
