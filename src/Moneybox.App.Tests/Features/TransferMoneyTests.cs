@@ -175,23 +175,25 @@ namespace Moneybox.App.Tests.Features
             Account toAccount)
         {
             var mockedAccountRepository = new Mock<IAccountRepository>();
-            mockedAccountRepository
-                .Setup(repository => repository.GetAccountById(fromAccount.Id))
-                .Returns(fromAccount);
-
-            mockedAccountRepository
-                .Setup(repository => repository.Update(fromAccount))
-                .Verifiable("Persistence is expected when operation is successful");
-
-            mockedAccountRepository
-                .Setup(repository => repository.GetAccountById(toAccount.Id))
-                .Returns(toAccount);
-
-            mockedAccountRepository
-                .Setup(repository => repository.Update(toAccount))
-                .Verifiable("Persistence is expected when operation is successful");
+            SetupMockedAccountRepository(mockedAccountRepository, fromAccount);
+            SetupMockedAccountRepository(mockedAccountRepository, toAccount);
 
             return mockedAccountRepository;
+        }
+
+        private static void SetupMockedAccountRepository(
+            Mock<IAccountRepository> mockedAccountRepository,
+            Account? account)
+        {
+            var mockedAccountRepositorySetup = account is null
+                ? mockedAccountRepository.Setup(repository => repository.GetAccountById(It.IsAny<Guid>()))
+                : mockedAccountRepository.Setup(repository => repository.GetAccountById(account.Id));
+
+            mockedAccountRepositorySetup.Returns(account);
+
+            mockedAccountRepository
+                .Setup(repository => repository.Update(account))
+                .Verifiable("Persistence is expected when operation is successful");
         }
 
         private static Mock<INotificationService> CreateNotificationServiceMock()
