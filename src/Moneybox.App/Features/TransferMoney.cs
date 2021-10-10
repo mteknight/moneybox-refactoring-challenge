@@ -1,13 +1,14 @@
-﻿using Moneybox.App.DataAccess;
+﻿using System;
+
+using Moneybox.App.DataAccess;
 using Moneybox.App.Domain.Services;
-using System;
 
 namespace Moneybox.App.Features
 {
     public class TransferMoney
     {
-        private IAccountRepository accountRepository;
-        private INotificationService notificationService;
+        private readonly IAccountRepository accountRepository;
+        private readonly INotificationService notificationService;
 
         public TransferMoney(IAccountRepository accountRepository, INotificationService notificationService)
         {
@@ -20,11 +21,7 @@ namespace Moneybox.App.Features
             var from = this.accountRepository.GetAccountById(fromAccountId);
             var to = this.accountRepository.GetAccountById(toAccountId);
 
-            var fromBalance = from.Balance - amount;
-            if (fromBalance < 0m)
-            {
-                throw new InvalidOperationException("Insufficient funds to make transfer");
-            }
+            var fromBalance = from.CanTransfer(amount);
 
             if (fromBalance < 500m)
             {
