@@ -59,6 +59,46 @@ namespace Moneybox.App.Tests.Features
             this.mockedNotificationService.Verify(service => service.NotifyFundsLow(It.IsAny<string>()), Times.Exactly(1));
         }
 
+        [Theory]
+        [AutoData]
+        public void GivenToAccountExceedsPayInLimit_WhenExecutingMoneyTransfer_ExpectInvalidOperationException(
+            Account fromAccount,
+            Account toAccount)
+        {
+            // Arrange
+            const decimal amount = 1;
+            fromAccount.Balance = amount;
+            toAccount.PaidIn = Account.PayInLimit;
+            var sut = this.SetupSut(fromAccount, toAccount);
+
+            // Act
+            void SutCall() => sut.Execute(fromAccount.Id, toAccount.Id, amount);
+            Action sutCall = SutCall;
+
+            // Assert
+            sutCall.Should().ThrowExactly<InvalidOperationException>("Account exceeds the limit of money it can receive.");
+        }
+
+        [Theory]
+        [AutoData]
+        public void GivenToAccountNearPayInLimit_WhenExecutingMoneyTransfer_ExpectLowFundsNotification(
+            [Range((int)Account.PayInLimit - 500, (int)Account.PayInLimit)] decimal toAccountPaidIn,
+            Account fromAccount,
+            Account toAccount)
+        {
+            // Arrange
+            toAccount.PaidIn = toAccountPaidIn;
+            const decimal amount = 0;
+            fromAccount.Balance = amount;
+            var sut = this.SetupSut(fromAccount, toAccount);
+
+            // Act
+            sut.Execute(fromAccount.Id, toAccount.Id, amount);
+
+            // Assert
+            this.mockedNotificationService.Verify(service => service.NotifyApproachingPayInLimit(It.IsAny<string>()), Times.Exactly(1));
+        }
+
         private TransferMoney SetupSut(
             Account fromAccount,
             Account toAccount)
@@ -92,27 +132,11 @@ namespace Moneybox.App.Tests.Features
                 .Setup(service => service.NotifyFundsLow(It.IsAny<string>()))
                 .Verifiable("A low funds notification is expected.");
 
+            mockedNotificationService
+                .Setup(service => service.NotifyApproachingPayInLimit(It.IsAny<string>()))
+                .Verifiable("A pay in limit notification is expected");
+
             return mockedNotificationService;
-        }
-
-        [Theory]
-        [AutoData]
-        public void GivenTransferExceedsPayInLimit_WhenExecutingMoneyTransfer_ExpectInvalidOperationException(
-            Account fromAccount,
-            Account toAccount)
-        {
-            // Arrange
-            const decimal amount = 1;
-            fromAccount.Balance = amount;
-            toAccount.PaidIn = Account.PayInLimit;
-            var sut = this.SetupSut(fromAccount, toAccount);
-
-            // Act
-            void SutCall() => sut.Execute(fromAccount.Id, toAccount.Id, amount);
-            Action sutCall = SutCall;
-
-            // Assert
-            sutCall.Should().ThrowExactly<InvalidOperationException>("Account exceeds the limit of money it can receive.");
         }
     }
 }
