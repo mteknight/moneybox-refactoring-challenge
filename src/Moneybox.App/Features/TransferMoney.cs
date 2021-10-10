@@ -1,5 +1,7 @@
 ﻿using System;
 
+using Dawn;
+
 using Moneybox.App.DataAccess;
 using Moneybox.App.Domain.Services;
 
@@ -12,8 +14,8 @@ namespace Moneybox.App.Features
 
         public TransferMoney(IAccountRepository accountRepository, INotificationService notificationService)
         {
-            this.accountRepository = accountRepository;
-            this.notificationService = notificationService;
+            this.accountRepository = Guard.Argument(accountRepository, nameof(accountRepository)).NotNull().Value;
+            this.notificationService = Guard.Argument(notificationService, nameof(notificationService)).NotNull().Value;
         }
 
         public void Execute(Guid fromAccountId, Guid toAccountId, decimal amount)
