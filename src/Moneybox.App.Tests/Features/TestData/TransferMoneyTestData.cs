@@ -17,8 +17,16 @@ namespace Moneybox.App.Tests.Features.TestData
         public static IEnumerable<object[]> NoBalanceAccountCase =>
             new List<object[]>
             {
-                new object[] { -1, Fixture.Create<Guid>(), Fixture.Create<Guid>(), Fixture.Create<uint>() },
-                new object[] { -10, Fixture.Create<Guid>(), Fixture.Create<Guid>(), Fixture.Create<uint>() },
+                new object[] { CreateNegativeNumber(), Fixture.Create<Guid>(), Fixture.Create<Guid>(), Fixture.Create<uint>() },
             };
+
+        private static int CreateNegativeNumber()
+        {
+            var number = Fixture.Create<int>();
+
+            return number >= 0
+                ? -number
+                : number;
+        }
     }
 }
