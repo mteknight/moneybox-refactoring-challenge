@@ -30,7 +30,7 @@ namespace Moneybox.App.Tests.Features
             // Arrange
             fromAccount.Balance = fromAccountBalance;
             const decimal amount = 0;
-            var sut = this.SetupSut(fromAccount);
+            var sut = this.SetupSut(fromAccount, toAccount);
 
             // Act
             void SutCall() => sut.Execute(fromAccount.Id, toAccount.Id, amount);
@@ -50,7 +50,7 @@ namespace Moneybox.App.Tests.Features
             // Arrange
             fromAccount.Balance = fromAccountBalance;
             const decimal amount = 0;
-            var sut = this.SetupSut(fromAccount);
+            var sut = this.SetupSut(fromAccount, toAccount);
 
             // Act
             sut.Execute(fromAccount.Id, toAccount.Id, amount);
@@ -59,20 +59,28 @@ namespace Moneybox.App.Tests.Features
             this.mockedNotificationService.Verify(service => service.NotifyFundsLow(It.IsAny<string>()), Times.Exactly(1));
         }
 
-        private TransferMoney SetupSut(Account fromAccount)
+        private TransferMoney SetupSut(
+            Account fromAccount,
+            Account toAccount)
         {
-            this.mockedAccountRepository = CreateAccountRepositoryMock(fromAccount);
+            this.mockedAccountRepository = CreateAccountRepositoryMock(fromAccount, toAccount);
             this.mockedNotificationService = CreateNotificationServiceMock();
 
             return new TransferMoney(this.mockedAccountRepository.Object, this.mockedNotificationService.Object);
         }
 
-        private static Mock<IAccountRepository> CreateAccountRepositoryMock(Account fromAccount)
+        private static Mock<IAccountRepository> CreateAccountRepositoryMock(
+            Account fromAccount,
+            Account toAccount)
         {
             var mockedAccountRepository = new Mock<IAccountRepository>();
             mockedAccountRepository
-                .Setup(repository => repository.GetAccountById(It.IsAny<Guid>()))
+                .Setup(repository => repository.GetAccountById(fromAccount.Id))
                 .Returns(fromAccount);
+
+            mockedAccountRepository
+                .Setup(repository => repository.GetAccountById(toAccount.Id))
+                .Returns(toAccount);
 
             return mockedAccountRepository;
         }
@@ -85,6 +93,26 @@ namespace Moneybox.App.Tests.Features
                 .Verifiable("A low funds notification is expected.");
 
             return mockedNotificationService;
+        }
+
+        [Theory]
+        [AutoData]
+        public void GivenTransferExceedsPayInLimit_WhenExecutingMoneyTransfer_ExpectInvalidOperationException(
+            Account fromAccount,
+            Account toAccount)
+        {
+            // Arrange
+            const decimal amount = 1;
+            fromAccount.Balance = amount;
+            toAccount.PaidIn = Account.PayInLimit;
+            var sut = this.SetupSut(fromAccount, toAccount);
+
+            // Act
+            void SutCall() => sut.Execute(fromAccount.Id, toAccount.Id, amount);
+            Action sutCall = SutCall;
+
+            // Assert
+            sutCall.Should().ThrowExactly<InvalidOperationException>("Account exceeds the limit of money it can receive.");
         }
     }
 }
