@@ -22,13 +22,12 @@ namespace Moneybox.App.Features
             var to = this.accountRepository.GetAccountById(toAccountId);
 
             from.CanTransferMoney(amount, this.notificationService);
+            to.CanReceiveMoney(amount, this.notificationService);
 
-            var paidIn = to.CanReceiveMoney(amount);
-
-            if (Account.PayInLimit - paidIn < 500m)
-            {
-                this.notificationService.NotifyApproachingPayInLimit(to.User.Email);
-            }
+            // if (Account.PayInLimit - paidIn < 500m)
+            // {
+            //     this.notificationService.NotifyApproachingPayInLimit(to.User.Email);
+            // }
 
             from.Balance = from.Balance - amount;
             from.Withdrawn = from.Withdrawn - amount;

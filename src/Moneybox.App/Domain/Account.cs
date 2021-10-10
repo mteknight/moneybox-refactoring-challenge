@@ -36,7 +36,9 @@ namespace Moneybox.App
             return true;
         }
 
-        public decimal CanReceiveMoney(decimal amount)
+        public bool CanReceiveMoney(
+            decimal amount,
+            INotificationService notificationService)
         {
             var paidIn = this.PaidIn + amount;
             if (paidIn > PayInLimit)
@@ -44,7 +46,12 @@ namespace Moneybox.App
                 throw new InvalidOperationException("Account pay in limit reached");
             }
 
-            return paidIn;
+            if (PayInLimit - paidIn < 500m)
+            {
+                notificationService.NotifyApproachingPayInLimit(this.User.Email);
+            }
+
+            return true;
         }
     }
 }
