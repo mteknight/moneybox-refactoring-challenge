@@ -18,7 +18,7 @@ namespace Moneybox.App
 
         public decimal PaidIn { get; set; }
 
-        public bool CanTransfer(
+        public bool CanTransferMoney(
             decimal amount,
             INotificationService notificationService)
         {
@@ -34,6 +34,17 @@ namespace Moneybox.App
             }
 
             return true;
+        }
+
+        public decimal CanReceiveMoney(decimal amount)
+        {
+            var paidIn = this.PaidIn + amount;
+            if (paidIn > PayInLimit)
+            {
+                throw new InvalidOperationException("Account pay in limit reached");
+            }
+
+            return paidIn;
         }
     }
 }

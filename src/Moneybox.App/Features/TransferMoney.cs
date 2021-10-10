@@ -21,13 +21,9 @@ namespace Moneybox.App.Features
             var from = this.accountRepository.GetAccountById(fromAccountId);
             var to = this.accountRepository.GetAccountById(toAccountId);
 
-            from.CanTransfer(amount, this.notificationService);
+            from.CanTransferMoney(amount, this.notificationService);
 
-            var paidIn = to.PaidIn + amount;
-            if (paidIn > Account.PayInLimit)
-            {
-                throw new InvalidOperationException("Account pay in limit reached");
-            }
+            var paidIn = to.CanReceiveMoney(amount);
 
             if (Account.PayInLimit - paidIn < 500m)
             {
