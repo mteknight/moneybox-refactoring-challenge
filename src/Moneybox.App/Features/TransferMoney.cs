@@ -24,11 +24,6 @@ namespace Moneybox.App.Features
             from.CanTransferMoney(amount, this.notificationService);
             to.CanReceiveMoney(amount, this.notificationService);
 
-            // if (Account.PayInLimit - paidIn < 500m)
-            // {
-            //     this.notificationService.NotifyApproachingPayInLimit(to.User.Email);
-            // }
-
             from.Balance = from.Balance - amount;
             from.Withdrawn = from.Withdrawn - amount;
 
