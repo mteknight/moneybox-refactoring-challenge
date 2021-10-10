@@ -54,13 +54,21 @@ namespace Moneybox.App
             return true;
         }
 
-        public void TransferMoney(decimal amount)
+        public void TransferMoney(
+            Account toAccount,
+            decimal amount,
+            INotificationService notificationService)
         {
+            this.CanTransferMoney(amount, notificationService);
+            toAccount.CanReceiveMoney(amount, notificationService);
+
             this.Balance -= amount;
             this.Withdrawn -= amount;
+
+            toAccount.ReceiveMoney(amount);
         }
 
-        public void ReceiveMoney(decimal amount)
+        private void ReceiveMoney(decimal amount)
         {
             this.Balance += amount;
             this.PaidIn += amount;

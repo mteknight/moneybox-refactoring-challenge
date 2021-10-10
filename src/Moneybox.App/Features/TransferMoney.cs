@@ -18,17 +18,13 @@ namespace Moneybox.App.Features
 
         public void Execute(Guid fromAccountId, Guid toAccountId, decimal amount)
         {
-            var from = this.accountRepository.GetAccountById(fromAccountId);
-            var to = this.accountRepository.GetAccountById(toAccountId);
+            var fromAccount = this.accountRepository.GetAccountById(fromAccountId);
+            var toAccount = this.accountRepository.GetAccountById(toAccountId);
 
-            from.CanTransferMoney(amount, this.notificationService);
-            to.CanReceiveMoney(amount, this.notificationService);
+            fromAccount.TransferMoney(toAccount, amount, this.notificationService);
 
-            from.TransferMoney(amount);
-            to.ReceiveMoney(amount);
-
-            this.accountRepository.Update(from);
-            this.accountRepository.Update(to);
+            this.accountRepository.Update(fromAccount);
+            this.accountRepository.Update(toAccount);
         }
     }
 }
