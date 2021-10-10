@@ -17,6 +17,9 @@ namespace Moneybox.App.Tests.Features
 {
     public sealed class TransferMoneyTests
     {
+        private Mock<IAccountRepository> mockedAccountRepository;
+        private Mock<INotificationService> mockedNotificationService;
+
         [Theory]
         [AutoData]
         public void GivenFromAccountHasNoBalance_WhenExecutingMoneyTransfer_ExpectInvalidOperationException(
@@ -27,9 +30,7 @@ namespace Moneybox.App.Tests.Features
             // Arrange
             fromAccount.Balance = fromAccountBalance;
             const decimal amount = 0;
-            var mockedAccountRepository = CreateAccountRepositoryMock(fromAccount);
-            var mockedNotificationService = CreateNotificationServiceMock();
-            var sut = new TransferMoney(mockedAccountRepository.Object, mockedNotificationService.Object);
+            var sut = this.SetupSut(fromAccount);
 
             // Act
             void SutCall() => sut.Execute(fromAccount.Id, toAccount.Id, amount);
@@ -49,15 +50,21 @@ namespace Moneybox.App.Tests.Features
             // Arrange
             fromAccount.Balance = fromAccountBalance;
             const decimal amount = 0;
-            var mockedAccountRepository = CreateAccountRepositoryMock(fromAccount);
-            var mockedNotificationService = CreateNotificationServiceMock();
-            var sut = new TransferMoney(mockedAccountRepository.Object, mockedNotificationService.Object);
+            var sut = this.SetupSut(fromAccount);
 
             // Act
             sut.Execute(fromAccount.Id, toAccount.Id, amount);
 
             // Assert
-            mockedNotificationService.Verify(service => service.NotifyFundsLow(It.IsAny<string>()), Times.Exactly(1));
+            this.mockedNotificationService.Verify(service => service.NotifyFundsLow(It.IsAny<string>()), Times.Exactly(1));
+        }
+
+        private TransferMoney SetupSut(Account fromAccount)
+        {
+            this.mockedAccountRepository = CreateAccountRepositoryMock(fromAccount);
+            this.mockedNotificationService = CreateNotificationServiceMock();
+
+            return new TransferMoney(this.mockedAccountRepository.Object, this.mockedNotificationService.Object);
         }
 
         private static Mock<IAccountRepository> CreateAccountRepositoryMock(Account fromAccount)
