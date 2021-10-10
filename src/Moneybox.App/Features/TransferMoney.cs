@@ -21,7 +21,16 @@ namespace Moneybox.App.Features
         public void Execute(Guid fromAccountId, Guid toAccountId, decimal amount)
         {
             var fromAccount = this.accountRepository.GetAccountById(fromAccountId);
+            if (fromAccount is null)
+            {
+                throw new ArgumentException($"No account was found for id '{fromAccount}'");
+            }
+
             var toAccount = this.accountRepository.GetAccountById(toAccountId);
+            if (toAccount is null)
+            {
+                throw new ArgumentException($"No account was found for id '{toAccount}'");
+            }
 
             fromAccount.TransferMoney(toAccount, amount, this.notificationService);
 
