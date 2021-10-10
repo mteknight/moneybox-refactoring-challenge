@@ -126,6 +126,23 @@ namespace Moneybox.App.Tests.Features
 
         [Theory]
         [AutoData]
+        public void GivenFromAccountNotfound_WhenExecutingMoneyTransfer_ExpectArgumentException(
+            Guid fromAccountId,
+            Account toAccount)
+        {
+            // Arrange
+            const decimal amount = 0;
+            var sut = this.SetupSut(default, toAccount);
+            // Act
+            void SutCall() => sut.Execute(fromAccountId, toAccount.Id, amount);
+            Action sutCall = SutCall;
+
+            // Assert
+            sutCall.Should().ThrowExactly<ArgumentException>("No account to transfer funds from was found.");
+        }
+
+        [Theory]
+        [AutoData]
         public void GivenTransferIsSuccessful_WhenExecutingMoneyTransfer_ExpectValuesArePersisted(
             Account fromAccount,
             Account toAccount)
