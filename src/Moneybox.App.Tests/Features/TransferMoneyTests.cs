@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
+using AutoFixture;
 using AutoFixture.Xunit2;
 
 using FluentAssertions;
@@ -202,11 +203,11 @@ namespace Moneybox.App.Tests.Features
             Mock<IAccountRepository> mockedAccountRepository,
             Account? account)
         {
-            var mockedAccountRepositorySetup = account is null
-                ? mockedAccountRepository.Setup(repository => repository.GetAccountById(It.IsAny<Guid>()))
-                : mockedAccountRepository.Setup(repository => repository.GetAccountById(account.Id));
+            var accountId = account?.Id ?? new Fixture().Create<Guid>();
 
-            mockedAccountRepositorySetup.Returns(account);
+            mockedAccountRepository
+                .Setup(repository => repository.GetAccountById(accountId))
+                .Returns(account);
 
             mockedAccountRepository
                 .Setup(repository => repository.Update(account))
