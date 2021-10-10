@@ -99,6 +99,31 @@ namespace Moneybox.App.Tests.Features
             this.mockedNotificationService.Verify(service => service.NotifyApproachingPayInLimit(It.IsAny<string>()), Times.Exactly(1));
         }
 
+        [Theory]
+        [AutoData]
+        public void GivenMoneyIsTransferredSuccessfully_WhenExecutingMoneyTransfer_ExpectAmountTransferred(
+            Account fromAccount,
+            Account toAccount,
+            [Range(1, (int)Account.PayInLimit - 500)]decimal amount)
+        {
+            // Arrange
+            fromAccount.Balance = amount;
+            var expectedFromBalance = fromAccount.Balance - amount;
+            var expectedFromWithdrawn = fromAccount.Withdrawn - amount;
+            var expectedToBalance = toAccount.Balance + amount;
+            var expectedToPaidIn = toAccount.PaidIn + amount;
+            var sut = this.SetupSut(fromAccount, toAccount);
+
+            // Act
+            sut.Execute(fromAccount.Id, toAccount.Id, amount);
+
+            // Assert
+            fromAccount.Balance.Should().Be(expectedFromBalance, "The amount is expected to be removed from the origin account balance");
+            fromAccount.Withdrawn.Should().Be(expectedFromWithdrawn, "The amount is expected to be removed from the origin account withdrawn value");
+            toAccount.Balance.Should().Be(expectedToBalance, "The amount is expected to be added to the destination account balance");
+            toAccount.PaidIn.Should().Be(expectedToPaidIn, "The amount is expected to be added tp the destination account paid in value");
+        }
+
         private TransferMoney SetupSut(
             Account fromAccount,
             Account toAccount)
