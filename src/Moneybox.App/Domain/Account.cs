@@ -18,14 +18,14 @@ namespace Moneybox.App
 
         public decimal PaidIn { get; set; }
 
-        public bool CanTransferMoney(
+        public bool HasEnoughFunds(
             decimal amount,
             INotificationService notificationService)
         {
             var fromBalance = this.Balance - amount;
             if (fromBalance < 0m)
             {
-                throw new InvalidOperationException("Insufficient funds to make transfer");
+                throw new InvalidOperationException("Insufficient funds.");
             }
 
             if (fromBalance < 500m)
@@ -59,7 +59,7 @@ namespace Moneybox.App
             decimal amount,
             INotificationService notificationService)
         {
-            this.CanTransferMoney(amount, notificationService);
+            this.HasEnoughFunds(amount, notificationService);
             toAccount.CanReceiveMoney(amount, notificationService);
 
             this.Balance -= amount;
@@ -72,6 +72,16 @@ namespace Moneybox.App
         {
             this.Balance += amount;
             this.PaidIn += amount;
+        }
+
+        public void WithdrawMoney(
+            decimal amount,
+            INotificationService notificationService)
+        {
+            this.HasEnoughFunds(amount, notificationService);
+
+            this.Balance -= amount;
+            this.Withdrawn -= amount;
         }
     }
 }
