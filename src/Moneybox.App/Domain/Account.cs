@@ -53,5 +53,17 @@ namespace Moneybox.App
 
             return true;
         }
+
+        public void TransferMoney(decimal amount)
+        {
+            this.Balance -= amount;
+            this.Withdrawn -= amount;
+        }
+
+        public void ReceiveMoney(decimal amount)
+        {
+            this.Balance += amount;
+            this.PaidIn += amount;
+        }
     }
 }

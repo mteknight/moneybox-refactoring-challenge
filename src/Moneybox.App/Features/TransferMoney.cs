@@ -24,11 +24,8 @@ namespace Moneybox.App.Features
             from.CanTransferMoney(amount, this.notificationService);
             to.CanReceiveMoney(amount, this.notificationService);
 
-            from.Balance = from.Balance - amount;
-            from.Withdrawn = from.Withdrawn - amount;
-
-            to.Balance = to.Balance + amount;
-            to.PaidIn = to.PaidIn + amount;
+            from.TransferMoney(amount);
+            to.ReceiveMoney(amount);
 
             this.accountRepository.Update(from);
             this.accountRepository.Update(to);
