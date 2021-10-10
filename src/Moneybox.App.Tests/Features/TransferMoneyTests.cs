@@ -124,6 +124,25 @@ namespace Moneybox.App.Tests.Features
             toAccount.PaidIn.Should().Be(expectedToPaidIn, "The amount is expected to be added tp the destination account paid in value");
         }
 
+        [Theory]
+        [AutoData]
+        public void GivenTransferIsSuccessful_WhenExecutingMoneyTransfer_ExpectValuesArePersisted(
+            Account fromAccount,
+            Account toAccount)
+        {
+            // Arrange
+            const decimal amount = 0;
+            fromAccount.Balance = amount;
+            var sut = this.SetupSut(fromAccount, toAccount);
+
+            // Act
+            sut.Execute(fromAccount.Id, toAccount.Id, amount);
+
+            // Assert
+            this.mockedAccountRepository.Verify(repository => repository.Update(fromAccount), Times.Exactly(1));
+            this.mockedAccountRepository.Verify(repository => repository.Update(toAccount), Times.Exactly(1));
+        }
+
         private TransferMoney SetupSut(
             Account fromAccount,
             Account toAccount)
@@ -144,8 +163,16 @@ namespace Moneybox.App.Tests.Features
                 .Returns(fromAccount);
 
             mockedAccountRepository
+                .Setup(repository => repository.Update(fromAccount))
+                .Verifiable("Persistence is expected when operation is successful");
+
+            mockedAccountRepository
                 .Setup(repository => repository.GetAccountById(toAccount.Id))
                 .Returns(toAccount);
+
+            mockedAccountRepository
+                .Setup(repository => repository.Update(toAccount))
+                .Verifiable("Persistence is expected when operation is successful");
 
             return mockedAccountRepository;
         }
